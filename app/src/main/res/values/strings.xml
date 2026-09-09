@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">موس مجازی</string>
-    <string name="acc_description">این سرویس برای نمایش موس مجازی و انجام کلیک و درگ روی صفحه گوشی استفاده می‌شود.</string>
+    <string name="acc_description">این سرویس برای نمایش موس مجازی و انجام کلیک، اسکرول و کپی/پیست روی صفحه گوشی استفاده می‌شود.</string>
     <string name="title">🖱️ موس مجازی</string>
     <string name="status_active">وضعیت: فعال ✅ — موس روی صفحه است</string>
     <string name="status_inactive">وضعیت: غیرفعال ❌ — اول Accessibility را روشن کنید</string>
     <string name="open_accessibility">فعال‌کردن Accessibility (تنظیمات)</string>
-    <string name="sensitivity_label">سرعت حرکت موس:</string>
-    <string name="sensitivity_value">%1$.1f برابر</string>
+    <string name="notif_status">وضعیت اجازه نوتیفیکیشن: %1$s</string>
+    <string name="request_notification">دادن اجازه نوتیفیکیشن</string>
+    <string name="sensitivity_label">سرعت حرکت موس (۱ تا ۲۰):</string>
+    <string name="sens_format">سرعت: %1$d از ۲۰</string>
+    <string name="size_label">سایز نشانگر (۲۴ تا ۸۰):</string>
+    <string name="size_format">سایز: %1$d</string>
+    <string name="shape_label">شکل نشانگر:</string>
+    <string name="color_label">رنگ نشانگر:</string>
+    <string name="current_format">فعلی — شکل: %1$s • رنگ: %2$s</string>
     <string name="guide_title">راهنمای استفاده</string>
-    <string name="guide_text">۱) دکمه بالا را بزنید و در لیست سرویس‌ها، «موس مجازی» را روشن کنید و اجازه بدهید.\n۲) یک Touchpad در پایین صفحه و یک نشانگر (Cursor) ظاهر می‌شود.\n۳) انگشت خود را روی Touchpad حرکت دهید تا Cursor جابه‌جا شود.\n۴) Tap سریع = کلیک چپ • نگه‌داشتن انگشت ≈ نیم ثانیه = کلیک راست (لمس طولانی)\n۵) دکمه «درگ» را بزنید، انگشت را حرکت دهید و دوباره بزنید تا عنصر رها شود.\n۶) دکمه «بستن» موس را خاموش می‌کند.\n⚠️ توجه: در صفحه‌های قفل و رمز و اپ‌های بانکی، اندروید اجازه کلیک نمی‌دهد.</string>
+    <string name="guide_text">۱) Accessibility را روشن کنید؛ Touchpad پایین صفحه و نشانگر ظاهر می‌شود.\n۲) حرکت انگشت روی Touchpad = جابه‌جایی نشانگر.\n۳) Tap سریع = کلیک چپ • لمس طولانی = باز شدن منو (کلیک چپ/راست، دابل کلیک، اسکرول، کپی، پیست، انتخاب همه).\n۴) دکمه «درگ» = درگ‌کردن؛ دوباره بزنید تا عنصر رها شود.\n۵) از نوتیفیکیشن می‌توانید موس را روشن/خاموش کنید.\n⚠️ در صفحه رمز و اپ‌های بانکی اندروید اجازه کلیک نمی‌دهد.</string>
 </resources>
