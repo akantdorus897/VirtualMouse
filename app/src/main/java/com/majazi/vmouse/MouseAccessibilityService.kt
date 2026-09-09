@@ -534,7 +534,7 @@ class MouseAccessibilityService : AccessibilityService() {
                 }
                 if (abs(dx) > 0.5f || abs(dy) > 0.5f) {
                     moveCursor(dx * MouseConfig.multiplier, dy * MouseConfig.multiplier)
-                    if (dragMode) dragPath?.lineTo(cursorX, cursorY)
+                    if (dragMode) dragPath?.lineTo(clickX(), clickY())
                 }
                 lastTouchX = event.x
                 lastTouchY = event.y
@@ -619,7 +619,7 @@ class MouseAccessibilityService : AccessibilityService() {
 
     private fun startDrag() {
         dragMode = true
-        dragPath = Path().apply { moveTo(cursorX, cursorY) }
+        dragPath = Path().apply { moveTo(clickX(), clickY()) }
         dragButton?.text = "رها کردن ⬆"
     }
 
@@ -629,7 +629,7 @@ class MouseAccessibilityService : AccessibilityService() {
         val path = dragPath
         dragPath = null
         if (path == null) return
-        path.lineTo(cursorX, cursorY)
+        path.lineTo(clickX(), clickY())
         val length = PathMeasure(path, false).length
         if (length < dp(8f)) {
             performRightClick()
@@ -647,6 +647,19 @@ class MouseAccessibilityService : AccessibilityService() {
 
     // ---------------- Gestures ----------------
 
+    private fun tipOffset(): FloatArray {
+        val size = cursorParams.width.toFloat()
+        return when (MouseConfig.shape) {
+            CursorView.SHAPE_CENTER, CursorView.SHAPE_CIRCLE -> floatArrayOf(size / 2f, size / 2f)
+            CursorView.SHAPE_HAND -> floatArrayOf(size / 2f, size * 2f / 34f)
+            else -> floatArrayOf(size * 4f / 34f, size * 2f / 34f)
+        }
+    }
+
+    private fun clickX(): Float = cursorX + tipOffset()[0]
+
+    private fun clickY(): Float = cursorY + tipOffset()[1]
+
     private fun strokeAt(x: Float, y: Float, durationMs: Long): GestureDescription {
         val path = Path()
         path.moveTo(x, y)
@@ -658,22 +671,24 @@ class MouseAccessibilityService : AccessibilityService() {
 
     private fun performLeftClick() {
         pulseCursor()
-        dispatchGesture(strokeAt(cursorX, cursorY, 90L), null, null)
+        dispatchGesture(strokeAt(clickX(), clickY(), 90L), null, null)
     }
 
     private fun performRightClick() {
         pulseCursor()
-        dispatchGesture(strokeAt(cursorX, cursorY, 600L), null, null)
+        dispatchGesture(strokeAt(clickX(), clickY(), 600L), null, null)
     }
 
     private fun performDoubleClick() {
         pulseCursor()
+        val cx = clickX()
+        val cy = clickY()
         val path1 = Path()
-        path1.moveTo(cursorX, cursorY)
-        path1.lineTo(cursorX + 0.5f, cursorY + 0.5f)
+        path1.moveTo(cx, cy)
+        path1.lineTo(cx + 0.5f, cy + 0.5f)
         val path2 = Path()
-        path2.moveTo(cursorX, cursorY)
-        path2.lineTo(cursorX + 0.5f, cursorY + 0.5f)
+        path2.moveTo(cx, cy)
+        path2.lineTo(cx + 0.5f, cy + 0.5f)
         dispatchGesture(
             GestureDescription.Builder()
                 .addStroke(GestureDescription.StrokeDescription(path1, 0, 50))
@@ -685,11 +700,13 @@ class MouseAccessibilityService : AccessibilityService() {
     }
 
     private fun scroll(up: Boolean) {
+        val cx = clickX()
+        val cy = clickY()
         val dist = 360f
-        val endY = if (up) min((screenHeight - 1).toFloat(), cursorY + dist) else max(1f, cursorY - dist)
+        val endY = if (up) min((screenHeight - 1).toFloat(), cy + dist) else max(1f, cy - dist)
         val path = Path()
-        path.moveTo(cursorX, cursorY)
-        path.lineTo(cursorX, endY)
+        path.moveTo(cx, cy)
+        path.lineTo(cx, endY)
         dispatchGesture(
             GestureDescription.Builder()
                 .addStroke(GestureDescription.StrokeDescription(path, 0, 250L))
