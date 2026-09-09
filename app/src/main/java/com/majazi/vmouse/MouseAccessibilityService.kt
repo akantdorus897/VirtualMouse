@@ -345,7 +345,7 @@ class MouseAccessibilityService : AccessibilityService() {
         addItem("اسکرول پایین ⬇") { scroll(false) }
         addItem("کپی 📋", keepOpen = true) { textAction(AccessibilityNodeInfo.ACTION_COPY) }
         addItem("پیست 📥", keepOpen = true) { textAction(AccessibilityNodeInfo.ACTION_PASTE) }
-        addItem("انتخاب همه", keepOpen = true) { textAction(AccessibilityNodeInfo.ACTION_SELECT_ALL) }
+        addItem("انتخاب همه", keepOpen = true) { selectAll() }
         addItem("بستن منو ✕") { }
 
         menuView = scrim
@@ -457,6 +457,21 @@ class MouseAccessibilityService : AccessibilityService() {
             ?: root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
         if (node == null) node = findEditable(root)
         return node?.performAction(action) ?: false
+    }
+
+    private fun selectAll(): Boolean {
+        val root = rootInActiveWindow ?: return false
+        var node = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+            ?: root.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
+        if (node == null) node = findEditable(root)
+        node ?: return false
+        val args = android.os.Bundle()
+        args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
+        args.putInt(
+            AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT,
+            (node.text?.length ?: 10000).coerceAtLeast(1)
+        )
+        return node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, args)
     }
 
     private fun findEditable(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
