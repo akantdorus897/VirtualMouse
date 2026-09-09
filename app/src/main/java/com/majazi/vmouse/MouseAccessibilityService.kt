@@ -48,11 +48,17 @@ class MouseAccessibilityService : AccessibilityService() {
     private lateinit var windowManager: WindowManager
     private lateinit var prefs: SharedPreferences
     private var cursorView: CursorView? = null
-    private var padView: View? = null
+    private var panelView: View? = null
+    private var panelParams: WindowManager.LayoutParams? = null
+    private var handleView: View? = null
+    private var handleParams: WindowManager.LayoutParams? = null
     private var menuView: View? = null
     private var menuParams: WindowManager.LayoutParams? = null
     private lateinit var cursorParams: WindowManager.LayoutParams
-    private lateinit var padParams: WindowManager.LayoutParams
+    private var panelCollapsed = false
+    private var panelOnRight = true
+    private var panelY = 0
+    private var headerLastY = 0f
 
     private var cursorX = 0f
     private var cursorY = 0f
@@ -74,7 +80,7 @@ class MouseAccessibilityService : AccessibilityService() {
 
     private var dragMode = false
     private var dragPath: Path? = null
-    private var dragButton: Button? = null
+    private var dragButton: TextView? = null
 
     private val toggleReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -95,7 +101,7 @@ class MouseAccessibilityService : AccessibilityService() {
         cursorX = screenWidth / 2f
         cursorY = screenHeight / 3f
         setupCursor()
-        setupTouchpad()
+        setupPanel()
         registerToggleReceiver()
         showNotification()
     }
@@ -183,10 +189,7 @@ class MouseAccessibilityService : AccessibilityService() {
                     if (cursorView?.isAttachedToWindow == false) windowManager.addView(cursorView, cursorParams)
                 } catch (_: Exception) {
                 }
-                try {
-                    if (padView?.isAttachedToWindow == false) windowManager.addView(padView, padParams)
-                } catch (_: Exception) {
-                }
+                if (panelCollapsed) showHandle() else showPanel()
             } else {
                 hideMenu()
                 try {
@@ -194,9 +197,10 @@ class MouseAccessibilityService : AccessibilityService() {
                 } catch (_: Exception) {
                 }
                 try {
-                    padView?.let { windowManager.removeView(it) }
+                    panelView?.let { windowManager.removeView(it) }
                 } catch (_: Exception) {
                 }
+                hideHandleView()
             }
             showNotification()
         }
@@ -212,56 +216,221 @@ class MouseAccessibilityService : AccessibilityService() {
         }
     }
 
-    // ---------------- Touchpad ----------------
+    // ---------------- Trackpad Panel (kenar-e keyboard) ----------------
 
-    private fun setupTouchpad() {
-        padView = buildPadView()
-        padParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            dp(160f).toInt(),
+    private fun setupPanel() {
+        panelCollapsed = prefs.getBoolean("panel_collapsed", false)
+        panelOnRight = prefs.getBoolean("panel_on_right", true)
+        panelY = prefs.getInt("panel_y", -1)
+        if (panelY < 0) panelY = (screenHeight * 0.18f).toInt()
+        if (panelCollapsed) showHandle() else showPanel()
+    }
+
+    private fun sideGravity(): Int =
+        if (panelOnRight) Gravity.TOP or Gravity.END else Gravity.TOP or Gravity.START
+
+    private fun showPanel() {
+        if (panelView != null) return
+        panelCollapsed = false
+        prefs.edit().putBoolean("panel_collapsed", false).apply()
+        panelView = buildPanel()
+        panelParams = WindowManager.LayoutParams(
+            dp(96f).toInt(),
+            (screenHeight * 0.58f).toInt(),
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-        padParams.gravity = Gravity.BOTTOM or Gravity.START
-        windowManager.addView(padView, padParams)
-        padView?.setOnTouchListener { _, event -> handlePadTouch(event) }
+        panelParams.gravity = sideGravity()
+        panelParams.y = panelY
+        windowManager.addView(panelView, panelParams)
+        hideHandleView()
     }
 
-    private fun buildPadView(): View {
-        val pad = LinearLayout(this)
-        pad.orientation = LinearLayout.VERTICAL
-        pad.setBackgroundColor(0x33000000)
-        pad.setPadding(dp(12f).toInt(), dp(8f).toInt(), dp(12f).toInt(), dp(8f).toInt())
-
-        val hint = TextView(this)
-        hint.text = "Touchpad — حرکت = جابه‌جایی موس • Tap = کلیک • لمس طولانی = منو"
-        hint.setTextColor(Color.WHITE)
-        hint.textSize = 13f
-        pad.addView(hint)
-
-        val row = LinearLayout(this)
-        row.orientation = LinearLayout.HORIZONTAL
-
-        val dragBtn = Button(this)
-        dragBtn.text = "درگ ✋"
-        dragBtn.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-            marginEnd = dp(8f).toInt()
+    private fun collapsePanel() {
+        panelCollapsed = true
+        prefs.edit().putBoolean("panel_collapsed", true).apply()
+        panelView?.let {
+            try {
+                windowManager.removeView(it)
+            } catch (_: Exception) {
+            }
         }
-        dragBtn.setOnClickListener {
+        panelView = null
+        showHandle()
+    }
+
+    private fun showHandle() {
+        if (handleView != null) return
+        val tab = TextView(this)
+        tab.text = "▦"
+        tab.setTextColor(Color.WHITE)
+        tab.textSize = 18f
+        tab.gravity = Gravity.CENTER
+        tab.setBackgroundColor(0xE6141414.toInt())
+        tab.setOnClickListener { showPanel() }
+        handleView = tab
+        handleParams = WindowManager.LayoutParams(
+            dp(26f).toInt(),
+            dp(74f).toInt(),
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        )
+        handleParams.gravity = sideGravity()
+        handleParams.y = panelY
+        windowManager.addView(handleView, handleParams)
+    }
+
+    private fun hideHandleView() {
+        handleView?.let {
+            try {
+                windowManager.removeView(it)
+            } catch (_: Exception) {
+            }
+        }
+        handleView = null
+    }
+
+    private fun flipSide() {
+        panelOnRight = !panelOnRight
+        prefs.edit().putBoolean("panel_on_right", panelOnRight).apply()
+        if (panelCollapsed) {
+            hideHandleView()
+            showHandle()
+        } else {
+            panelView?.let {
+                panelParams?.gravity = sideGravity()
+                try {
+                    windowManager.updateViewLayout(it, panelParams)
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
+
+    private fun handleHeaderDrag(event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                headerLastY = event.rawY
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val dy = event.rawY - headerLastY
+                headerLastY = event.rawY
+                panelY = (panelY + dy).toInt().coerceIn(0, (screenHeight - dp(140f)).toInt())
+                prefs.edit().putInt("panel_y", panelY).apply()
+                val v = panelView
+                if (v != null && panelParams != null) {
+                    panelParams?.y = panelY
+                    try {
+                        windowManager.updateViewLayout(v, panelParams)
+                    } catch (_: Exception) {
+                    }
+                } else if (handleView != null && handleParams != null) {
+                    handleParams?.y = panelY
+                    try {
+                        windowManager.updateViewLayout(handleView, handleParams)
+                    } catch (_: Exception) {
+                    }
+                }
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun panelButton(text: String, onClick: () -> Unit, weight: Float): TextView {
+        val b = TextView(this)
+        b.text = text
+        b.setTextColor(Color.WHITE)
+        b.textSize = 15f
+        b.gravity = Gravity.CENTER
+        b.setBackgroundColor(0x33FFFFFF)
+        val lp = LinearLayout.LayoutParams(0, dp(44f).toInt(), weight)
+        val m = dp(2f).toInt()
+        lp.setMargins(m, m, m, m)
+        b.layoutParams = lp
+        b.setOnClickListener { onClick() }
+        return b
+    }
+
+    private fun buildPanel(): View {
+        val panel = LinearLayout(this)
+        panel.orientation = LinearLayout.VERTICAL
+        panel.setBackgroundColor(0xE6141414.toInt())
+        val p = dp(4f).toInt()
+        panel.setPadding(p, p, p, p)
+
+        // Header: drag(≡) + flip(⇄) + collapse(—)
+        val header = LinearLayout(this)
+        header.orientation = LinearLayout.HORIZONTAL
+
+        val grip = TextView(this)
+        grip.text = "≡"
+        grip.setTextColor(Color.WHITE)
+        grip.textSize = 16f
+        grip.gravity = Gravity.CENTER
+        grip.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
+        grip.setOnTouchListener { _, event -> handleHeaderDrag(event) }
+        header.addView(grip)
+
+        val flip = TextView(this)
+        flip.text = "⇄"
+        flip.setTextColor(Color.WHITE)
+        flip.textSize = 14f
+        flip.gravity = Gravity.CENTER
+        flip.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
+        flip.setOnClickListener { flipSide() }
+        header.addView(flip)
+
+        val minBtn = TextView(this)
+        minBtn.text = "—"
+        minBtn.setTextColor(Color.WHITE)
+        minBtn.textSize = 14f
+        minBtn.gravity = Gravity.CENTER
+        minBtn.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
+        minBtn.setOnClickListener { collapsePanel() }
+        header.addView(minBtn)
+
+        panel.addView(header)
+
+        // Trackpad: harekat + tap=click + long-press=menu
+        val track = View(this)
+        track.setBackgroundColor(0x33FFFFFF)
+        track.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
+        )
+        track.setOnTouchListener { _, event -> handlePadTouch(event) }
+        panel.addView(track)
+
+        // Scroll
+        val scrollRow = LinearLayout(this)
+        scrollRow.orientation = LinearLayout.HORIZONTAL
+        scrollRow.addView(panelButton("⬆", { scroll(true) }, 0.5f))
+        scrollRow.addView(panelButton("⬇", { scroll(false) }, 0.5f))
+        panel.addView(scrollRow)
+
+        // Clicks
+        val row1 = LinearLayout(this)
+        row1.orientation = LinearLayout.HORIZONTAL
+        row1.addView(panelButton("L", { performLeftClick() }, 0.5f))
+        row1.addView(panelButton("R", { performRightClick() }, 0.5f))
+        panel.addView(row1)
+
+        // Double + Drag + Menu
+        val row2 = LinearLayout(this)
+        row2.orientation = LinearLayout.HORIZONTAL
+        row2.addView(panelButton("\u00d72", { performDoubleClick() }, 1f / 3f))
+        val dragBtn = panelButton("\u2725", {
             if (dragMode) endDrag() else startDrag()
-        }
+        }, 1f / 3f)
         dragButton = dragBtn
-        row.addView(dragBtn)
+        row2.addView(dragBtn)
+        row2.addView(panelButton("☰", { showMenu() }, 1f / 3f))
+        panel.addView(row2)
 
-        val closeBtn = Button(this)
-        closeBtn.text = "بستن ✕"
-        closeBtn.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        closeBtn.setOnClickListener { disableSelf() }
-        row.addView(closeBtn)
-
-        pad.addView(row)
-        return pad
+        return panel
     }
 
     private fun handlePadTouch(event: MotionEvent): Boolean {
@@ -519,11 +688,12 @@ class MouseAccessibilityService : AccessibilityService() {
         } catch (_: Exception) {
         }
         try {
-            padView?.let { windowManager.removeView(it) }
+            panelView?.let { windowManager.removeView(it) }
         } catch (_: Exception) {
         }
+        hideHandleView()
         cursorView = null
-        padView = null
+        panelView = null
     }
 
     private fun dp(value: Float): Float =
