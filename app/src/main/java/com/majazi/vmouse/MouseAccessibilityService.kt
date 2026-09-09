@@ -460,7 +460,8 @@ class MouseAccessibilityService : AccessibilityService() {
         track.background = tb
         track.layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
-        ).apply { minimumHeight = dp(104f).toInt() }
+        )
+        track.minimumHeight = dp(104f).toInt()
         track.setOnTouchListener { _, event -> handlePadTouch(event) }
         panel.addView(track)
 
@@ -500,10 +501,10 @@ class MouseAccessibilityService : AccessibilityService() {
 
         val row4 = LinearLayout(this)
         row4.orientation = LinearLayout.HORIZONTAL
-        row4.addView(panelButton("\U0001F514", { performGlobal(GLOBAL_ACTION_NOTIFICATIONS) }, 1f / 3f))
+        row4.addView(panelButton("🔔", { performGlobal(GLOBAL_ACTION_NOTIFICATIONS) }, 1f / 3f))
         if (Build.VERSION.SDK_INT >= 28) {
-            row4.addView(panelButton("\U0001F4F7", { performGlobal(GLOBAL_ACTION_TAKE_SCREENSHOT) }, 1f / 3f))
-            row4.addView(panelButton("\U0001F512", { performGlobal(GLOBAL_ACTION_LOCK_SCREEN) }, 1f / 3f))
+            row4.addView(panelButton("📷", { performGlobal(GLOBAL_ACTION_TAKE_SCREENSHOT) }, 1f / 3f))
+            row4.addView(panelButton("🔒", { performGlobal(GLOBAL_ACTION_LOCK_SCREEN) }, 1f / 3f))
         }
         panel.addView(row4)
 
