@@ -235,8 +235,8 @@ class MouseAccessibilityService : AccessibilityService() {
         prefs.edit().putBoolean("panel_collapsed", false).apply()
         panelView = buildPanel()
         val lp = WindowManager.LayoutParams(
-            dp(96f).toInt(),
-            (screenHeight * 0.58f).toInt(),
+            dp(108f).toInt(),
+            WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -314,6 +314,7 @@ class MouseAccessibilityService : AccessibilityService() {
     private fun handleHeaderDrag(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                panelTouched()
                 headerLastY = event.rawY
                 return true
             }
@@ -342,6 +343,27 @@ class MouseAccessibilityService : AccessibilityService() {
         return false
     }
 
+    private val idleFadeRunnable = Runnable { setPanelAlpha(0.35f) }
+
+    private fun panelTouched() {
+        setPanelAlpha(1f)
+        handler.removeCallbacks(idleFadeRunnable)
+        handler.postDelayed(idleFadeRunnable, 2500L)
+    }
+
+    private fun setPanelAlpha(alpha: Float) {
+        panelView?.animate()?.alpha(alpha)?.setDuration(300)?.start()
+        handleView?.animate()?.alpha(alpha)?.setDuration(300)?.start()
+    }
+
+    private fun pulseCursor() {
+        val v = cursorView ?: return
+        v.animate().scaleX(0.6f).scaleY(0.6f).setDuration(70)
+            .withEndAction {
+                v.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
+            }.start()
+    }
+
     private fun panelButton(text: String, onClick: () -> Unit, weight: Float): TextView {
         val b = TextView(this)
         b.text = text
@@ -360,7 +382,11 @@ class MouseAccessibilityService : AccessibilityService() {
     private fun buildPanel(): View {
         val panel = LinearLayout(this)
         panel.orientation = LinearLayout.VERTICAL
-        panel.setBackgroundColor(0xE6141414.toInt())
+        val bg = android.graphics.drawable.GradientDrawable()
+        bg.setColor(0xE6141414.toInt())
+        bg.cornerRadius = dp(18f)
+        panel.background = bg
+        panel.clipToOutline = true
         val p = dp(4f).toInt()
         panel.setPadding(p, p, p, p)
 
@@ -397,11 +423,14 @@ class MouseAccessibilityService : AccessibilityService() {
 
         panel.addView(header)
 
-        // Trackpad: harekat + tap=click + long-press=menu
+        // Trackpad: moraba-e gooshe-gerd (~ andazeh do angosht)
         val track = View(this)
-        track.setBackgroundColor(0x33FFFFFF)
+        val tb = android.graphics.drawable.GradientDrawable()
+        tb.setColor(0x2EFFFFFF)
+        tb.cornerRadius = dp(16f)
+        track.background = tb
         track.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
+            LinearLayout.LayoutParams.MATCH_PARENT, dp(104f).toInt()
         )
         track.setOnTouchListener { _, event -> handlePadTouch(event) }
         panel.addView(track)
@@ -436,6 +465,7 @@ class MouseAccessibilityService : AccessibilityService() {
     }
 
     private fun handlePadTouch(event: MotionEvent): Boolean {
+        panelTouched()
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 lastTouchX = event.x
@@ -580,14 +610,17 @@ class MouseAccessibilityService : AccessibilityService() {
     }
 
     private fun performLeftClick() {
-        dispatchGesture(strokeAt(cursorX, cursorY, 60L), null, null)
+        pulseCursor()
+        dispatchGesture(strokeAt(cursorX, cursorY, 90L), null, null)
     }
 
     private fun performRightClick() {
+        pulseCursor()
         dispatchGesture(strokeAt(cursorX, cursorY, 600L), null, null)
     }
 
     private fun performDoubleClick() {
+        pulseCursor()
         val path1 = Path()
         path1.moveTo(cursorX, cursorY)
         path1.lineTo(cursorX + 0.5f, cursorY + 0.5f)
