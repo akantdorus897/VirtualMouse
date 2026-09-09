@@ -56,9 +56,14 @@ class MouseAccessibilityService : AccessibilityService() {
     private var menuParams: WindowManager.LayoutParams? = null
     private lateinit var cursorParams: WindowManager.LayoutParams
     private var panelCollapsed = false
-    private var panelOnRight = true
+    private var panelX = 0
     private var panelY = 0
+    private var panelW = 0
+    private var panelH = 0
+    private var headerLastX = 0f
     private var headerLastY = 0f
+    private var resizeLastX = 0f
+    private var resizeLastY = 0f
 
     private var cursorX = 0f
     private var cursorY = 0f
@@ -220,14 +225,12 @@ class MouseAccessibilityService : AccessibilityService() {
 
     private fun setupPanel() {
         panelCollapsed = prefs.getBoolean("panel_collapsed", false)
-        panelOnRight = prefs.getBoolean("panel_on_right", true)
-        panelY = prefs.getInt("panel_y", -1)
-        if (panelY < 0) panelY = (screenHeight * 0.18f).toInt()
+        panelW = prefs.getInt("panel_w", -1).let { if (it < 0) dp(108f).toInt() else it }
+        panelH = prefs.getInt("panel_h", -1).let { if (it < 0) dp(340f).toInt() else it }
+        panelX = prefs.getInt("panel_x", -1).let { if (it < 0) screenWidth - panelW - dp(6f).toInt() else it }
+        panelY = prefs.getInt("panel_y", -1).let { if (it < 0) (screenHeight * 0.15f).toInt() else it }
         if (panelCollapsed) showHandle() else showPanel()
     }
-
-    private fun sideGravity(): Int =
-        if (panelOnRight) Gravity.TOP or Gravity.END else Gravity.TOP or Gravity.START
 
     private fun showPanel() {
         if (panelView != null) return
@@ -241,7 +244,8 @@ class MouseAccessibilityService : AccessibilityService() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-        lp.gravity = sideGravity()
+        lp.gravity = Gravity.TOP or Gravity.START
+        lp.x = panelX
         lp.y = panelY
         panelParams = lp
         windowManager.addView(panelView, lp)
@@ -278,7 +282,8 @@ class MouseAccessibilityService : AccessibilityService() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-        hp.gravity = sideGravity()
+        hp.gravity = Gravity.TOP or Gravity.START
+        hp.x = panelX
         hp.y = panelY
         handleParams = hp
         windowManager.addView(handleView, hp)
@@ -294,20 +299,40 @@ class MouseAccessibilityService : AccessibilityService() {
         handleView = null
     }
 
-    private fun flipSide() {
-        panelOnRight = !panelOnRight
-        prefs.edit().putBoolean("panel_on_right", panelOnRight).apply()
-        if (panelCollapsed) {
-            hideHandleView()
-            showHandle()
-        } else {
-            panelView?.let {
-                panelParams?.gravity = sideGravity()
-                try {
-                    windowManager.updateViewLayout(it, panelParams)
-                } catch (_: Exception) {
-                }
+    private fun handleResizeDrag(event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                resizeLastX = event.rawX
+                resizeLastY = event.rawY
+                return true
             }
+            MotionEvent.ACTION_MOVE -> {
+                panelTouched()
+                val dx = event.rawX - resizeLastX
+                val dy = event.rawY - resizeLastY
+                resizeLastX = event.rawX
+                resizeLastY = event.rawY
+                panelW = (panelW + dx).toInt().coerceIn(dp(90f).toInt(), dp(220f).toInt())
+                panelH = (panelH + dy).toInt().coerceIn(dp(260f).toInt(), (screenHeight * 0.75f).toInt())
+                prefs.edit().putInt("panel_w", panelW).putInt("panel_h", panelH).apply()
+                panelView?.let {
+                    panelParams?.width = panelW
+                    panelParams?.height = panelH
+                    try {
+                        windowManager.updateViewLayout(it, panelParams)
+                    } catch (_: Exception) {
+                    }
+                }
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun performGlobal(action: Int) {
+        try {
+            performGlobalAction(action)
+        } catch (_: Exception) {
         }
     }
 
@@ -315,14 +340,18 @@ class MouseAccessibilityService : AccessibilityService() {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 panelTouched()
+                headerLastX = event.rawX
                 headerLastY = event.rawY
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                val dx = event.rawX - headerLastX
                 val dy = event.rawY - headerLastY
+                headerLastX = event.rawX
                 headerLastY = event.rawY
+                panelX = (panelX + dx).toInt().coerceIn(-dp(10f).toInt(), (screenWidth - dp(50f)).toInt())
                 panelY = (panelY + dy).toInt().coerceIn(0, (screenHeight - dp(140f)).toInt())
-                prefs.edit().putInt("panel_y", panelY).apply()
+                prefs.edit().putInt("panel_x", panelX).putInt("panel_y", panelY).apply()
                 val v = panelView
                 if (v != null && panelParams != null) {
                     panelParams?.y = panelY
@@ -395,7 +424,7 @@ class MouseAccessibilityService : AccessibilityService() {
         header.orientation = LinearLayout.HORIZONTAL
 
         val grip = TextView(this)
-        grip.text = "≡"
+        grip.text = "◎"
         grip.setTextColor(Color.WHITE)
         grip.textSize = 16f
         grip.gravity = Gravity.CENTER
@@ -403,14 +432,14 @@ class MouseAccessibilityService : AccessibilityService() {
         grip.setOnTouchListener { _, event -> handleHeaderDrag(event) }
         header.addView(grip)
 
-        val flip = TextView(this)
-        flip.text = "⇄"
-        flip.setTextColor(Color.WHITE)
-        flip.textSize = 14f
-        flip.gravity = Gravity.CENTER
-        flip.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
-        flip.setOnClickListener { flipSide() }
-        header.addView(flip)
+        val resize = TextView(this)
+        resize.text = "↘"
+        resize.setTextColor(Color.WHITE)
+        resize.textSize = 14f
+        resize.gravity = Gravity.CENTER
+        resize.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
+        resize.setOnTouchListener { _, event -> handleResizeDrag(event) }
+        header.addView(resize)
 
         val minBtn = TextView(this)
         minBtn.text = "—"
@@ -430,8 +459,8 @@ class MouseAccessibilityService : AccessibilityService() {
         tb.cornerRadius = dp(16f)
         track.background = tb
         track.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, dp(104f).toInt()
-        )
+            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
+        ).apply { minimumHeight = dp(104f).toInt() }
         track.setOnTouchListener { _, event -> handlePadTouch(event) }
         panel.addView(track)
 
@@ -460,6 +489,23 @@ class MouseAccessibilityService : AccessibilityService() {
         row2.addView(dragBtn)
         row2.addView(panelButton("☰", { showMenu() }, 1f / 3f))
         panel.addView(row2)
+
+        // System navigation (mesl-e mouse-e vagheie)
+        val row3 = LinearLayout(this)
+        row3.orientation = LinearLayout.HORIZONTAL
+        row3.addView(panelButton("\u25c0", { performGlobal(GLOBAL_ACTION_BACK) }, 1f / 3f))
+        row3.addView(panelButton("\u2302", { performGlobal(GLOBAL_ACTION_HOME) }, 1f / 3f))
+        row3.addView(panelButton("\u2261", { performGlobal(GLOBAL_ACTION_RECENTS) }, 1f / 3f))
+        panel.addView(row3)
+
+        val row4 = LinearLayout(this)
+        row4.orientation = LinearLayout.HORIZONTAL
+        row4.addView(panelButton("\U0001F514", { performGlobal(GLOBAL_ACTION_NOTIFICATIONS) }, 1f / 3f))
+        if (Build.VERSION.SDK_INT >= 28) {
+            row4.addView(panelButton("\U0001F4F7", { performGlobal(GLOBAL_ACTION_TAKE_SCREENSHOT) }, 1f / 3f))
+            row4.addView(panelButton("\U0001F512", { performGlobal(GLOBAL_ACTION_LOCK_SCREEN) }, 1f / 3f))
+        }
+        panel.addView(row4)
 
         return panel
     }
