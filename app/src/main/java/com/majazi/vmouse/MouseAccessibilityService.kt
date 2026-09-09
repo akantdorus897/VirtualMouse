@@ -133,6 +133,8 @@ class MouseAccessibilityService : AccessibilityService() {
         MouseConfig.cursorSizeDp = prefs.getInt("size", 34)
         MouseConfig.shape = prefs.getInt("shape", CursorView.SHAPE_ARROW)
         MouseConfig.color = prefs.getInt("color", Color.WHITE)
+        MouseConfig.offsetX = prefs.getInt("cal_x", 0).toFloat()
+        MouseConfig.offsetY = prefs.getInt("cal_y", 0).toFloat()
     }
 
     // ---------------- Cursor ----------------
@@ -146,7 +148,8 @@ class MouseAccessibilityService : AccessibilityService() {
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                    or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                    or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         )
         cursorParams.gravity = Gravity.TOP or Gravity.START
@@ -656,9 +659,9 @@ class MouseAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun clickX(): Float = cursorX + tipOffset()[0]
+    private fun clickX(): Float = cursorX + tipOffset()[0] + MouseConfig.offsetX
 
-    private fun clickY(): Float = cursorY + tipOffset()[1]
+    private fun clickY(): Float = cursorY + tipOffset()[1] + MouseConfig.offsetY
 
     private fun strokeAt(x: Float, y: Float, durationMs: Long): GestureDescription {
         val path = Path()

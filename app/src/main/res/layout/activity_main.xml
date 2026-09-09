@@ -268,6 +268,59 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
+        <!-- Calibration card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎯 کالیبراسیون (اگر کلیک کمی جابه‌جا بود)"
+                android:textColor="#C9CFDA"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="افقی ← →"
+                android:textColor="#8A93A3"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/cal_x_seek"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="عمودی ↑ ↓"
+                android:textColor="#8A93A3"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/cal_y_seek"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/btn_cal_reset"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_chip"
+                android:text="ریست کالیبراسیون"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp" />
+        </LinearLayout>
+
         <!-- Guide card -->
         <LinearLayout
             android:layout_width="match_parent"

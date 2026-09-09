@@ -21,6 +21,13 @@ object MouseConfig {
     @Volatile
     var color: Int = Color.WHITE
 
+    // Kalibrasion (px offset baraye daghigh-shodan-e click)
+    @Volatile
+    var offsetX: Float = 0f
+
+    @Volatile
+    var offsetY: Float = 0f
+
     val multiplier: Float
         get() = sensitivityLevel / 5f
 }

@@ -44,6 +44,7 @@ class MainActivity : Activity() {
         setupSize()
         setupShapeButtons()
         setupColorButtons()
+        setupCalibration()
         updateLabels()
 
         findViewById<Button>(R.id.btn_accessibility).setOnClickListener {
@@ -138,6 +139,50 @@ class MainActivity : Activity() {
                 updateLabels()
                 notifyService()
             }
+        }
+    }
+
+    private fun setupCalibration() {
+        val seekX = findViewById<SeekBar>(R.id.cal_x_seek)
+        val seekY = findViewById<SeekBar>(R.id.cal_y_seek)
+        seekX.max = 200
+        seekY.max = 200
+        seekX.progress = prefs.getInt("cal_x", 0) + 100
+        seekY.progress = prefs.getInt("cal_y", 0) + 100
+
+        val apply = {
+            MouseConfig.offsetX = (seekX.progress - 100).toFloat()
+            MouseConfig.offsetY = (seekY.progress - 100).toFloat()
+            prefs.edit()
+                .putInt("cal_x", seekX.progress - 100)
+                .putInt("cal_y", seekY.progress - 100)
+                .apply()
+        }
+
+        seekX.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
+                apply()
+            }
+
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+
+            override fun onStopTrackingTouch(sb: SeekBar?) {}
+        })
+
+        seekY.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
+                apply()
+            }
+
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+
+            override fun onStopTrackingTouch(sb: SeekBar?) {}
+        })
+
+        findViewById<Button>(R.id.btn_cal_reset).setOnClickListener {
+            seekX.progress = 100
+            seekY.progress = 100
+            apply()
         }
     }
 
