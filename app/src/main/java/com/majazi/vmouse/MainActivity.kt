@@ -50,6 +50,15 @@ class MainActivity : Activity() {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
 
+        findViewById<Button>(R.id.btn_app_info).setOnClickListener {
+            startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.parse("package:$packageName")
+                )
+            )
+        }
+
         val btnNotif = findViewById<Button>(R.id.btn_notification)
         if (Build.VERSION.SDK_INT >= 33) {
             btnNotif.setOnClickListener {

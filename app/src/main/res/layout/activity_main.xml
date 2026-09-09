@@ -41,6 +41,13 @@
             android:text="@string/open_accessibility" />
 
         <Button
+            android:id="@+id/btn_app_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/open_app_info" />
+
+        <Button
             android:id="@+id/btn_notification"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

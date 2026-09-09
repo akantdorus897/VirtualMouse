@@ -6,6 +6,7 @@
     <string name="status_active">وضعیت: فعال ✅ — موس روی صفحه است</string>
     <string name="status_inactive">وضعیت: غیرفعال ❌ — اول Accessibility را روشن کنید</string>
     <string name="open_accessibility">فعال‌کردن Accessibility (تنظیمات)</string>
+    <string name="open_app_info">باز کردن اطلاعات برنامه (برای «اجازه تنظیمات محدود»)</string>
     <string name="notif_status">وضعیت اجازه نوتیفیکیشن: %1$s</string>
     <string name="request_notification">دادن اجازه نوتیفیکیشن</string>
     <string name="sensitivity_label">سرعت حرکت موس (۱ تا ۲۰):</string>
@@ -16,5 +17,11 @@
     <string name="color_label">رنگ نشانگر:</string>
     <string name="current_format">فعلی — شکل: %1$s • رنگ: %2$s</string>
     <string name="guide_title">راهنمای استفاده</string>
-    <string name="guide_text">۱) Accessibility را روشن کنید؛ Touchpad پایین صفحه و نشانگر ظاهر می‌شود.\n۲) حرکت انگشت روی Touchpad = جابه‌جایی نشانگر.\n۳) Tap سریع = کلیک چپ • لمس طولانی = باز شدن منو (کلیک چپ/راست، دابل کلیک، اسکرول، کپی، پیست، انتخاب همه).\n۴) دکمه «درگ» = درگ‌کردن؛ دوباره بزنید تا عنصر رها شود.\n۵) از نوتیفیکیشن می‌توانید موس را روشن/خاموش کنید.\n⚠️ در صفحه رمز و اپ‌های بانکی اندروید اجازه کلیک نمی‌دهد.</string>
+    <string name="guide_text">۱) Accessibility را روشن کنید؛ Touchpad پایین صفحه و نشانگر ظاهر می‌شود.
+⚠️ اگر پیام «تنظیمات محدود» (Restricted setting) دیدید: دکمه «اطلاعات برنامه» را بزنید ← منوی سه‌نقطه (⋮) بالا ← «اجازه تنظیمات محدود» را بزنید و دوباره امتحان کنید.
+۲) حرکت انگشت روی Touchpad = جابه‌جایی نشانگر.
+۳) Tap سریع = کلیک چپ • لمس طولانی = منو (کلیک چپ/راست، دابل کلیک، اسکرول، کپی، پیست، انتخاب همه).
+۴) دکمه «درگ» = درگ‌کردن؛ دوباره بزنید تا رها شود.
+۵) از نوتیفیکیشن می‌توانید موس را روشن/خاموش کنید.
+⚠️ در صفحه رمز و اپ‌های بانکی اندروید اجازه کلیک نمی‌دهد.</string></string>
 </resources>
