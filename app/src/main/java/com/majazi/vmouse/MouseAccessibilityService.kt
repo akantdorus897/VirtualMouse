@@ -234,16 +234,17 @@ class MouseAccessibilityService : AccessibilityService() {
         panelCollapsed = false
         prefs.edit().putBoolean("panel_collapsed", false).apply()
         panelView = buildPanel()
-        panelParams = WindowManager.LayoutParams(
+        val lp = WindowManager.LayoutParams(
             dp(96f).toInt(),
             (screenHeight * 0.58f).toInt(),
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-        panelParams.gravity = sideGravity()
-        panelParams.y = panelY
-        windowManager.addView(panelView, panelParams)
+        lp.gravity = sideGravity()
+        lp.y = panelY
+        panelParams = lp
+        windowManager.addView(panelView, lp)
         hideHandleView()
     }
 
@@ -270,16 +271,17 @@ class MouseAccessibilityService : AccessibilityService() {
         tab.setBackgroundColor(0xE6141414.toInt())
         tab.setOnClickListener { showPanel() }
         handleView = tab
-        handleParams = WindowManager.LayoutParams(
+        val hp = WindowManager.LayoutParams(
             dp(26f).toInt(),
             dp(74f).toInt(),
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-        handleParams.gravity = sideGravity()
-        handleParams.y = panelY
-        windowManager.addView(handleView, handleParams)
+        hp.gravity = sideGravity()
+        hp.y = panelY
+        handleParams = hp
+        windowManager.addView(handleView, hp)
     }
 
     private fun hideHandleView() {
