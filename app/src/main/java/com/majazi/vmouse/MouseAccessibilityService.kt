@@ -500,8 +500,9 @@ class MouseAccessibilityService : AccessibilityService() {
         // Clicks
         val row1 = LinearLayout(this)
         row1.orientation = LinearLayout.HORIZONTAL
-        row1.addView(panelButton("L", { performLeftClick() }, 0.5f))
-        row1.addView(panelButton("R", { performRightClick() }, 0.5f))
+        row1.addView(panelButton("L", { performLeftClick() }, 1f / 3f))
+        row1.addView(panelButton("R", { performRightClick() }, 1f / 3f))
+        row1.addView(panelButton("H", { performHover() }, 1f / 3f))
         panel.addView(row1)
 
         // Double + Drag + Menu
@@ -612,6 +613,7 @@ class MouseAccessibilityService : AccessibilityService() {
 
         addItem("کلیک چپ") { performLeftClick() }
         addItem("کلیک راست") { performRightClick() }
+        addItem("هاور (باز کردن منوها)") { performHover() }
         addItem("دابل کلیک") { performDoubleClick() }
         addItem("اسکرول بالا ⬆") { scroll(true) }
         addItem("اسکرول پایین ⬇") { scroll(false) }
@@ -702,6 +704,22 @@ class MouseAccessibilityService : AccessibilityService() {
     private fun performRightClick() {
         pulseCursor()
         dispatchGesture(strokeAt(clickX(), clickY(), 600L), null, null)
+    }
+
+    private fun performHover() {
+        pulseCursor()
+        val cx = clickX()
+        val cy = clickY()
+        val path = Path()
+        path.moveTo(cx, cy)
+        path.lineTo(cx + 0.5f, cy + 0.5f)
+        // down -> 350ms hold -> up (browser ha halat :hover fa'al mikonan)
+        dispatchGesture(
+            GestureDescription.Builder()
+                .addStroke(GestureDescription.StrokeDescription(path, 0, 350L))
+                .build(),
+            null, null
+        )
     }
 
     private fun performDoubleClick() {
