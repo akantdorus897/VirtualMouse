@@ -7,6 +7,15 @@ android {
     namespace 'com.majazi.vmouse'
     compileSdk 34
 
+    signingConfigs {
+        debug {
+            storeFile file('vmouse.keystore')
+            storePassword 'vmouse123'
+            keyAlias 'vmouse'
+            keyPassword 'vmouse123'
+        }
+    }
+
     defaultConfig {
         applicationId "com.majazi.vmouse"
         minSdk 24
