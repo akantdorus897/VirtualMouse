@@ -66,6 +66,7 @@ class MouseAccessibilityService : AccessibilityService() {
     private var lastTouchX = 0f
     private var lastTouchY = 0f
     private var moved = false
+    private var totalMove = 0f
     private var longPressPosted = false
     private val longPressRunnable = Runnable {
         if (!dragMode) showMenu()
@@ -269,6 +270,7 @@ class MouseAccessibilityService : AccessibilityService() {
                 lastTouchX = event.x
                 lastTouchY = event.y
                 moved = false
+                totalMove = 0f
                 longPressPosted = true
                 handler.postDelayed(longPressRunnable, 550L)
                 return true
@@ -276,18 +278,15 @@ class MouseAccessibilityService : AccessibilityService() {
             MotionEvent.ACTION_MOVE -> {
                 val dx = event.x - lastTouchX
                 val dy = event.y - lastTouchY
-                if (abs(dx) > 1f || abs(dy) > 1f) {
-                    if (!moved && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
-                        moved = true
-                        if (longPressPosted) {
-                            handler.removeCallbacks(longPressRunnable)
-                            longPressPosted = false
-                        }
-                    }
-                    if (moved) {
-                        moveCursor(dx * MouseConfig.multiplier, dy * MouseConfig.multiplier)
-                        if (dragMode) dragPath?.lineTo(cursorX, cursorY)
-                    }
+                totalMove += abs(dx) + abs(dy)
+                if (longPressPosted && totalMove > touchSlop) {
+                    handler.removeCallbacks(longPressRunnable)
+                    longPressPosted = false
+                    moved = true
+                }
+                if (abs(dx) > 0.5f || abs(dy) > 0.5f) {
+                    moveCursor(dx * MouseConfig.multiplier, dy * MouseConfig.multiplier)
+                    if (dragMode) dragPath?.lineTo(cursorX, cursorY)
                 }
                 lastTouchX = event.x
                 lastTouchY = event.y
