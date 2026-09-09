@@ -60,6 +60,8 @@ class MouseAccessibilityService : AccessibilityService() {
     private var panelY = 0
     private var panelW = 0
     private var panelH = 0
+    private var panelLocked = false
+    private var lockButton: TextView? = null
     private var headerLastX = 0f
     private var headerLastY = 0f
     private var resizeLastX = 0f
@@ -228,6 +230,7 @@ class MouseAccessibilityService : AccessibilityService() {
 
     private fun setupPanel() {
         panelCollapsed = prefs.getBoolean("panel_collapsed", false)
+        panelLocked = prefs.getBoolean("panel_locked", false)
         panelW = prefs.getInt("panel_w", -1).let { if (it < 0) dp(108f).toInt() else it }
         panelH = prefs.getInt("panel_h", -1).let { if (it < 0) dp(340f).toInt() else it }
         panelX = prefs.getInt("panel_x", -1).let { if (it < 0) screenWidth - panelW - dp(6f).toInt() else it }
@@ -310,6 +313,7 @@ class MouseAccessibilityService : AccessibilityService() {
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                if (panelLocked) return true
                 panelTouched()
                 val dx = event.rawX - resizeLastX
                 val dy = event.rawY - resizeLastY
@@ -332,6 +336,12 @@ class MouseAccessibilityService : AccessibilityService() {
         return false
     }
 
+    private fun toggleLock() {
+        panelLocked = !panelLocked
+        prefs.edit().putBoolean("panel_locked", panelLocked).apply()
+        lockButton?.text = if (panelLocked) "🔒" else "🔓"
+    }
+
     private fun performGlobal(action: Int) {
         try {
             performGlobalAction(action)
@@ -348,6 +358,7 @@ class MouseAccessibilityService : AccessibilityService() {
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                if (panelLocked) return true
                 val dx = event.rawX - headerLastX
                 val dy = event.rawY - headerLastY
                 headerLastX = event.rawX
@@ -429,11 +440,12 @@ class MouseAccessibilityService : AccessibilityService() {
         val grip = TextView(this)
         grip.text = "◎"
         grip.setTextColor(Color.WHITE)
-        grip.textSize = 16f
+        grip.textSize = 19f
         grip.gravity = Gravity.CENTER
         grip.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
         grip.setOnTouchListener { _, event -> handleHeaderDrag(event) }
         header.addView(grip)
+        header.setOnTouchListener { _, event -> handleHeaderDrag(event) }
 
         val resize = TextView(this)
         resize.text = "↘"
@@ -443,6 +455,16 @@ class MouseAccessibilityService : AccessibilityService() {
         resize.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
         resize.setOnTouchListener { _, event -> handleResizeDrag(event) }
         header.addView(resize)
+
+        val lock = TextView(this)
+        lock.text = if (panelLocked) "🔒" else "🔓"
+        lock.setTextColor(Color.WHITE)
+        lock.textSize = 13f
+        lock.gravity = Gravity.CENTER
+        lock.layoutParams = LinearLayout.LayoutParams(0, dp(32f).toInt(), 1f)
+        lock.setOnClickListener { toggleLock() }
+        lockButton = lock
+        header.addView(lock)
 
         val minBtn = TextView(this)
         minBtn.text = "—"
