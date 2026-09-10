@@ -186,6 +186,27 @@ class MouseAccessibilityService : AccessibilityService() {
             windowManager.updateViewLayout(view, cursorParams)
         } catch (_: Exception) {
         }
+        // Agar cursor zire panel-e rafteh, cursor ro bala byar (re-attach)
+        // ta neshangar hameshe didan beshe
+        val pv = panelView
+        if (pv != null) {
+            val pl = panelParams
+            if (pl != null) {
+                val px0 = pl.x
+                val py0 = pl.y
+                val px1 = px0 + pl.width
+                val py1 = py0 + pl.height
+                val cx = cursorX.toInt()
+                val cy = cursorY.toInt()
+                if (cx >= px0 && cx <= px1 && cy >= py0 && cy <= py1) {
+                    try {
+                        windowManager.removeView(view)
+                        windowManager.addView(view, cursorParams)
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        }
     }
 
     // ---------------- On/Off (Notification) ----------------
@@ -247,7 +268,8 @@ class MouseAccessibilityService : AccessibilityService() {
             panelW,
             panelH,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         )
         lp.gravity = Gravity.TOP or Gravity.START
@@ -256,6 +278,14 @@ class MouseAccessibilityService : AccessibilityService() {
         panelParams = lp
         windowManager.addView(panelView, lp)
         hideHandleView()
+        // Cursor hamishe rooye panel bashe
+        cursorView?.let { cv ->
+            try {
+                windowManager.removeView(cv)
+                windowManager.addView(cv, cursorParams)
+            } catch (_: Exception) {
+            }
+        }
     }
 
     private fun collapsePanel() {
@@ -285,7 +315,8 @@ class MouseAccessibilityService : AccessibilityService() {
             dp(26f).toInt(),
             dp(74f).toInt(),
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         )
         hp.gravity = Gravity.TOP or Gravity.START
@@ -363,8 +394,10 @@ class MouseAccessibilityService : AccessibilityService() {
                 val dy = event.rawY - headerLastY
                 headerLastX = event.rawX
                 headerLastY = event.rawY
-                panelX = (panelX + dx).toInt().coerceIn(-dp(10f).toInt(), (screenWidth - dp(50f)).toInt())
-                panelY = (panelY + dy).toInt().coerceIn(0, (screenHeight - dp(140f)).toInt())
+                // AZAD: mitune harja bereh, hatta rooye notification bar / navbar
+                // faghat kamelan kharej-e screen man dast nemikunem
+                panelX = (panelX + dx).toInt().coerceIn(-panelW / 3, (screenWidth - panelW * 2 / 3))
+                panelY = (panelY + dy).toInt().coerceIn(-dp(20f).toInt(), (screenHeight - dp(40f)).toInt())
                 prefs.edit().putInt("panel_x", panelX).putInt("panel_y", panelY).apply()
                 val v = panelView
                 if (v != null && panelParams != null) {

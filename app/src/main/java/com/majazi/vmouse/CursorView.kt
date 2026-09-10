@@ -75,28 +75,23 @@ class CursorView(context: Context) : View(context) {
 
     private fun drawHand(canvas: Canvas, w: Float) {
         val s = w / 34f
+        // Shekl-e dast-e "Windows 10" — engosht-e eshare-e noor-o-noke
         // Noke-ye engosht-e eshare: (17s, 2s) -> CLICK HAMOONJA MISHEH
-        // Kaf + 4 engosht-e past (gooshe-gerd) + engosht-e eshare-e boland
         val fillP = Path()
-        // kaf (palm) - moraba-e gooshe-gerd
-        fillP.addRoundRect(RectF(8f * s, 15f * s, 26f * s, 31f * s), 5f * s, 5f * s, Path.Direction.CW)
-        // 4 engosht-e past (bexesvi chandan-e normal-e dast)
-        fillP.addRoundRect(RectF(8.5f * s, 16f * s, 12.5f * s, 27f * s), 2f * s, 2f * s, Path.Direction.CW)
-        fillP.addRoundRect(RectF(13f * s, 14f * s, 16.5f * s, 26f * s), 2f * s, 2f * s, Path.Direction.CW)
-        fillP.addRoundRect(RectF(17f * s, 13f * s, 20.5f * s, 26f * s), 2f * s, 2f * s, Path.Direction.CW)
-        fillP.addRoundRect(RectF(21f * s, 15f * s, 24.5f * s, 28f * s), 2f * s, 2f * s, Path.Direction.CW)
+        // Engosht-e eshare: boland va barike
+        fillP.addRoundRect(RectF(14.5f * s, 2f * s, 19.5f * s, 18f * s), 2.5f * s, 2.5f * s, Path.Direction.CW)
+        // 3 engosht-e past-e sookhteh (vasat-e kaf)
+        fillP.addRoundRect(RectF(7f * s, 16.5f * s, 11f * s, 25f * s), 2f * s, 2f * s, Path.Direction.CW)
+        fillP.addRoundRect(RectF(11.5f * s, 15f * s, 15f * s, 25.5f * s), 2f * s, 2f * s, Path.Direction.CW)
+        fillP.addRoundRect(RectF(20f * s, 15f * s, 23.5f * s, 25.5f * s), 2f * s, 2f * s, Path.Direction.CW)
+        // engosht-e koochak (pink)
+        fillP.addRoundRect(RectF(24f * s, 17.5f * s, 27f * s, 26f * s), 2f * s, 2f * s, Path.Direction.CW)
+        // kaf — shekl-e Windows: gerd-o-shekl-e dast
+        fillP.addRoundRect(RectF(7f * s, 21f * s, 27f * s, 32f * s), 4.5f * s, 4.5f * s, Path.Direction.CW)
+        // engosht-e shast (thumb) — rooye chap-e kaf
+        fillP.addRoundRect(RectF(3.5f * s, 19f * s, 9f * s, 27f * s), 2.5f * s, 2.5f * s, Path.Direction.CW)
         canvas.drawPath(fillP, fill)
         canvas.drawPath(fillP, outline)
-        // engosht-e eshare - dorough-e noke baraye click daghigh
-        val pointer = Path()
-        pointer.addRoundRect(RectF(14.8f * s, 2f * s, 19.2f * s, 20f * s), 2.2f * s, 2.2f * s, Path.Direction.CW)
-        canvas.drawPath(pointer, fill)
-        canvas.drawPath(pointer, outline)
-        // mehak (esme dast) baraye jelvehe
-        val wrist = Path()
-        wrist.addRoundRect(RectF(11f * s, 28f * s, 23f * s, 32f * s), 3f * s, 3f * s, Path.Direction.CW)
-        canvas.drawPath(wrist, fill)
-        canvas.drawPath(wrist, outline)
     }
 
     private fun drawCenter(canvas: Canvas, w: Float, h: Float) {
