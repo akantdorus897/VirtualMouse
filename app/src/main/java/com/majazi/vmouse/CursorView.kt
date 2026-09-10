@@ -6,10 +6,15 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.util.AttributeSet
 import android.view.View
 
 /** Neshan-e cursor ba 4 shekl va rang-e ghabel-e taghir */
-class CursorView(context: Context) : View(context) {
+class CursorView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : View(context, attrs, defStyleAttr) {
 
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL

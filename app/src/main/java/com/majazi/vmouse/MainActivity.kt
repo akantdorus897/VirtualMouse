@@ -29,6 +29,11 @@ class MainActivity : Activity() {
     private lateinit var notifStatus: TextView
     private lateinit var preview: CursorView
     private var floatAnim: ValueAnimator? = null
+    private var ringOpen = false
+    private lateinit var toolRing: View
+    private lateinit var toolScrim: View
+    private lateinit var toolFab: TextView
+    private lateinit var toolHint: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +57,7 @@ class MainActivity : Activity() {
         setupColorButtons()
         setupCalibration()
         setupPreview()
+        setupToolRing()
         updateLabels()
 
         findViewById<Button>(R.id.btn_accessibility).setOnClickListener {
@@ -252,6 +258,94 @@ class MainActivity : Activity() {
         sizeLabel.text = getString(R.string.size_format, MouseConfig.cursorSizeDp)
         currentConfig.text = getString(R.string.current_format, shapeName(), colorName())
         refreshPreview()
+    }
+
+    // ---------------- Tool Ring (halghe-ye abzari-e dayerei) ----------------
+
+    private fun setupToolRing() {
+        toolRing = findViewById(R.id.tool_ring)
+        toolScrim = findViewById(R.id.tool_scrim)
+        toolFab = findViewById(R.id.tool_fab)
+        toolHint = findViewById(R.id.tool_hint)
+
+        toolFab.setOnClickListener { toggleRing() }
+        toolScrim.setOnClickListener { toggleRing() }
+        toolHint.setOnClickListener { toggleRing() }
+
+        // Dokmeha: kar-e mouse, bedoone niaz be trackpad
+        val svc = { MouseAccessibilityService.instance }
+        wireTool(R.id.tool_L) { svc()?.clickLeft() }
+        wireTool(R.id.tool_R) { svc()?.clickRight() }
+        wireTool(R.id.tool_2x) { svc()?.clickDouble() }
+        wireTool(R.id.tool_H) { updateHoverBtn(); svc()?.hoverToggle(); updateHoverBtn() }
+        wireTool(R.id.tool_up) { svc()?.scrollUp() }
+        wireTool(R.id.tool_down) { svc()?.scrollDown() }
+        wireTool(R.id.tool_back) { svc()?.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK) }
+        wireTool(R.id.tool_home) { svc()?.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME) }
+        wireTool(R.id.tool_recent) { svc()?.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_RECENTS) }
+        wireTool(R.id.tool_lock) { toggleRing() }
+
+        // Pad: harekat-e daghigh-e cursor bedoone trackpad
+        wireTool(R.id.pad_u) { svc()?.nudge(0f, -stepPx()) }
+        wireTool(R.id.pad_d) { svc()?.nudge(0f, stepPx()) }
+        wireTool(R.id.pad_l) { svc()?.nudge(-stepPx(), 0f) }
+        wireTool(R.id.pad_r) { svc()?.nudge(stepPx(), 0f) }
+        wireTool(R.id.pad_c) { svc()?.clickLeft() }
+    }
+
+    private fun wireTool(id: Int, action: () -> Unit) {
+        findViewById<View>(id).setOnClickListener {
+            it.animate().scaleX(0.85f).scaleY(0.85f).setDuration(60)
+                .withEndAction { it.animate().scaleX(1f).scaleY(1f).setDuration(120).start() }
+                .start()
+            action()
+        }
+    }
+
+    private fun stepPx(): Float = (resources.displayMetrics.density * 24f)
+
+    private fun updateHoverBtn() {
+        val b = findViewById<TextView>(R.id.tool_H)
+        val active = MouseAccessibilityService.instance?.isHoverActive() == true
+        b.text = if (active) "H●" else "H"
+        b.setBackgroundResource(if (active) R.drawable.bg_accent else R.drawable.bg_chip)
+    }
+
+    private fun toggleRing() {
+        ringOpen = !ringOpen
+        updateHoverBtn()
+        if (ringOpen) {
+            // Baz shodan: dayerei az markaz
+            toolRing.visibility = View.VISIBLE
+            toolRing.pivotX = toolRing.width / 2f
+            toolRing.pivotY = toolRing.height / 2f
+            toolRing.alpha = 0f
+            toolRing.scaleX = 0.2f
+            toolRing.scaleY = 0.2f
+            toolRing.rotation = -30f
+            toolRing.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .rotation(0f)
+                .setDuration(380)
+                .setInterpolator(OvershootInterpolator(1.4f))
+                .start()
+            toolFab.text = "X"
+            toolHint.visibility = View.GONE
+        } else {
+            // Basteh shodan: jam shodan be markaz
+            toolRing.animate()
+                .alpha(0f)
+                .scaleX(0.15f)
+                .scaleY(0.15f)
+                .rotation(20f)
+                .setDuration(220)
+                .withEndAction { toolRing.visibility = View.GONE }
+                .start()
+            toolFab.text = "M"
+            toolHint.visibility = View.VISIBLE
+        }
     }
 
     private fun shapeName(): String = when (MouseConfig.shape) {

@@ -179,6 +179,25 @@ class MouseAccessibilityService : AccessibilityService() {
         }
     }
 
+    // ---- Action-haye omoomi baraye control az app (tool ring-e MainActivity) ----
+
+    fun clickLeft() = performLeftClick()
+
+    fun clickRight() = performRightClick()
+
+    fun clickDouble() = performDoubleClick()
+
+    fun hoverToggle() = performHover()
+
+    fun scrollUp() = scroll(true)
+
+    fun scrollDown() = scroll(false)
+
+    /** Harekat-e daghigh-e cursor bedoone trackpad (px) */
+    fun nudge(dx: Float, dy: Float) = moveCursor(dx, dy)
+
+    fun isHoverActive(): Boolean = hoverActive
+
     private fun moveCursor(dx: Float, dy: Float) {
         cursorX = min(max(cursorX + dx, 0f), (screenWidth - 1).toFloat())
         cursorY = min(max(cursorY + dy, 0f), (screenHeight - 1).toFloat())
@@ -850,6 +869,15 @@ class MouseAccessibilityService : AccessibilityService() {
 
     private fun performDoubleClick() {
         pulseCursor()
+        if (hoverActive) {
+            endHover()
+            handler.postDelayed({ performDoubleClickGesture() }, 150L)
+            return
+        }
+        performDoubleClickGesture()
+    }
+
+    private fun performDoubleClickGesture() {
         val cx = clickX()
         val cy = clickY()
         val path1 = Path()
