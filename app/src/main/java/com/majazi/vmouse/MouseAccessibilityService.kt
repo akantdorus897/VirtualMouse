@@ -231,8 +231,8 @@ class MouseAccessibilityService : AccessibilityService() {
     private fun setupPanel() {
         panelCollapsed = prefs.getBoolean("panel_collapsed", false)
         panelLocked = prefs.getBoolean("panel_locked", false)
-        panelW = prefs.getInt("panel_w", -1).let { if (it < 0) dp(108f).toInt() else it }
-        panelH = prefs.getInt("panel_h", -1).let { if (it < 0) dp(340f).toInt() else it }
+        panelW = prefs.getInt("panel_w", -1).let { if (it < 0) dp(84f).toInt() else it }
+        panelH = prefs.getInt("panel_h", -1).let { if (it < 0) dp(200f).toInt() else it }
         panelX = prefs.getInt("panel_x", -1).let { if (it < 0) screenWidth - panelW - dp(6f).toInt() else it }
         panelY = prefs.getInt("panel_y", -1).let { if (it < 0) (screenHeight * 0.15f).toInt() else it }
         if (panelCollapsed) showHandle() else showPanel()
@@ -319,8 +319,8 @@ class MouseAccessibilityService : AccessibilityService() {
                 val dy = event.rawY - resizeLastY
                 resizeLastX = event.rawX
                 resizeLastY = event.rawY
-                panelW = (panelW + dx).toInt().coerceIn(dp(90f).toInt(), dp(220f).toInt())
-                panelH = (panelH + dy).toInt().coerceIn(dp(260f).toInt(), (screenHeight * 0.75f).toInt())
+                panelW = (panelW + dx).toInt().coerceIn(dp(70f).toInt(), dp(260f).toInt())
+                panelH = (panelH + dy).toInt().coerceIn(dp(140f).toInt(), (screenHeight * 0.75f).toInt())
                 prefs.edit().putInt("panel_w", panelW).putInt("panel_h", panelH).apply()
                 panelView?.let {
                     panelParams?.width = panelW
@@ -413,11 +413,11 @@ class MouseAccessibilityService : AccessibilityService() {
         val b = TextView(this)
         b.text = text
         b.setTextColor(Color.WHITE)
-        b.textSize = 15f
+        b.textSize = 12f
         b.gravity = Gravity.CENTER
-        b.setBackgroundColor(0x33FFFFFF)
-        val lp = LinearLayout.LayoutParams(0, dp(44f).toInt(), weight)
-        val m = dp(2f).toInt()
+        b.setBackgroundColor(0x2EFFFFFF)
+        val lp = LinearLayout.LayoutParams(0, dp(28f).toInt(), weight)
+        val m = dp(1.5f).toInt()
         lp.setMargins(m, m, m, m)
         b.layoutParams = lp
         b.setOnClickListener { onClick() }
@@ -432,19 +432,19 @@ class MouseAccessibilityService : AccessibilityService() {
         bg.cornerRadius = dp(18f)
         panel.background = bg
         panel.clipToOutline = true
-        val p = dp(4f).toInt()
+        val p = dp(2.5f).toInt()
         panel.setPadding(p, p, p, p)
 
-        // Header: drag(≡) + flip(⇄) + collapse(—)
+        // Header: drag(≡) + flip(⇄) + collapse(—) — compact
         val header = LinearLayout(this)
         header.orientation = LinearLayout.HORIZONTAL
 
         val grip = TextView(this)
         grip.text = "◎"
         grip.setTextColor(Color.WHITE)
-        grip.textSize = 19f
+        grip.textSize = 14f
         grip.gravity = Gravity.CENTER
-        grip.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
+        grip.layoutParams = LinearLayout.LayoutParams(0, dp(22f).toInt(), 1f)
         grip.setOnTouchListener { _, event -> handleHeaderDrag(event) }
         header.addView(grip)
         header.setOnTouchListener { _, event -> handleHeaderDrag(event) }
@@ -452,18 +452,18 @@ class MouseAccessibilityService : AccessibilityService() {
         val resize = TextView(this)
         resize.text = "↘"
         resize.setTextColor(Color.WHITE)
-        resize.textSize = 14f
+        resize.textSize = 11f
         resize.gravity = Gravity.CENTER
-        resize.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
+        resize.layoutParams = LinearLayout.LayoutParams(0, dp(22f).toInt(), 1f)
         resize.setOnTouchListener { _, event -> handleResizeDrag(event) }
         header.addView(resize)
 
         val lock = TextView(this)
         lock.text = if (panelLocked) "🔒" else "🔓"
         lock.setTextColor(Color.WHITE)
-        lock.textSize = 13f
+        lock.textSize = 10f
         lock.gravity = Gravity.CENTER
-        lock.layoutParams = LinearLayout.LayoutParams(0, dp(32f).toInt(), 1f)
+        lock.layoutParams = LinearLayout.LayoutParams(0, dp(22f).toInt(), 1f)
         lock.setOnClickListener { toggleLock() }
         lockButton = lock
         header.addView(lock)
@@ -471,9 +471,9 @@ class MouseAccessibilityService : AccessibilityService() {
         val minBtn = TextView(this)
         minBtn.text = "—"
         minBtn.setTextColor(Color.WHITE)
-        minBtn.textSize = 14f
+        minBtn.textSize = 11f
         minBtn.gravity = Gravity.CENTER
-        minBtn.layoutParams = LinearLayout.LayoutParams(0, dp(30f).toInt(), 1f)
+        minBtn.layoutParams = LinearLayout.LayoutParams(0, dp(22f).toInt(), 1f)
         minBtn.setOnClickListener { collapsePanel() }
         header.addView(minBtn)
 
@@ -488,7 +488,7 @@ class MouseAccessibilityService : AccessibilityService() {
         track.layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
         )
-        track.minimumHeight = dp(104f).toInt()
+        track.minimumHeight = dp(70f).toInt()
         track.setOnTouchListener { _, event -> handlePadTouch(event) }
         panel.addView(track)
 
@@ -519,22 +519,32 @@ class MouseAccessibilityService : AccessibilityService() {
         row2.addView(panelButton("☰", { showMenu() }, 1f / 3f))
         panel.addView(row2)
 
-        // System navigation (mesl-e mouse-e vagheie)
+        // System navigation (gesture-haye vaghei-e sistem + global action)
         val row3 = LinearLayout(this)
         row3.orientation = LinearLayout.HORIZONTAL
-        row3.addView(panelButton("\u25c0", { performGlobal(GLOBAL_ACTION_BACK) }, 1f / 3f))
-        row3.addView(panelButton("\u2302", { performGlobal(GLOBAL_ACTION_HOME) }, 1f / 3f))
-        row3.addView(panelButton("\u2261", { performGlobal(GLOBAL_ACTION_RECENTS) }, 1f / 3f))
+        row3.addView(panelButton("◀", { performGlobal(GLOBAL_ACTION_BACK) }, 1f / 3f))
+        row3.addView(panelButton("⌂", { performGlobal(GLOBAL_ACTION_HOME) }, 1f / 3f))
+        row3.addView(panelButton("≡", { performGlobal(GLOBAL_ACTION_RECENTS) }, 1f / 3f))
         panel.addView(row3)
 
+        // Notification + Quick Settings ba gesture-e vaghei (keshidan az bala/paein)
         val row4 = LinearLayout(this)
         row4.orientation = LinearLayout.HORIZONTAL
-        row4.addView(panelButton("🔔", { performGlobal(GLOBAL_ACTION_NOTIFICATIONS) }, 1f / 3f))
-        if (Build.VERSION.SDK_INT >= 28) {
-            row4.addView(panelButton("📷", { performGlobal(GLOBAL_ACTION_TAKE_SCREENSHOT) }, 1f / 3f))
-            row4.addView(panelButton("🔒", { performGlobal(GLOBAL_ACTION_LOCK_SCREEN) }, 1f / 3f))
-        }
+        row4.addView(panelButton("🔔⬇", { openNotificationByGesture() }, 0.5f))
+        row4.addView(panelButton("⚙⬆", { openQuickSettingsByGesture() }, 0.5f))
         panel.addView(row4)
+
+        val row5 = LinearLayout(this)
+        row5.orientation = LinearLayout.HORIZONTAL
+        if (Build.VERSION.SDK_INT >= 28) {
+            row5.addView(panelButton("📷", { performGlobal(GLOBAL_ACTION_TAKE_SCREENSHOT) }, 1f / 3f))
+            row5.addView(panelButton("🔒scr", { performGlobal(GLOBAL_ACTION_LOCK_SCREEN) }, 1f / 3f))
+        } else {
+            row5.addView(panelButton("🔔", { performGlobal(GLOBAL_ACTION_NOTIFICATIONS) }, 0.5f))
+            row5.addView(panelButton("", {}, 0.5f))
+        }
+        row5.addView(panelButton("✕", { setMouseVisible(false) }, if (Build.VERSION.SDK_INT >= 28) 1f / 3f else 0.001f))
+        panel.addView(row5)
 
         return panel
     }
@@ -759,6 +769,77 @@ class MouseAccessibilityService : AccessibilityService() {
                 .build(),
             null,
             null
+        )
+    }
+
+    // ---------------- System Gestures (mouse-e kamel bedon OTG) ----------------
+
+    // Keshidane notification bar az bala-e screen (shade-e status bar)
+    private fun openNotificationByGesture() {
+        val cx = screenWidth / 2f
+        val path = Path()
+        path.moveTo(cx, 2f)
+        path.lineTo(cx, (screenHeight * 0.5f))
+        dispatchGesture(
+            GestureDescription.Builder()
+                .addStroke(GestureDescription.StrokeDescription(path, 0, 300L))
+                .build(), null, null
+        )
+    }
+
+    // Keshidan az paein = quick settings / navigation gesture bar
+    private fun openQuickSettingsByGesture() {
+        val cx = screenWidth / 2f
+        val startY = (screenHeight - 8f)
+        val path = Path()
+        path.moveTo(cx, startY)
+        path.lineTo(cx, (screenHeight * 0.4f))
+        dispatchGesture(
+            GestureDescription.Builder()
+                .addStroke(GestureDescription.StrokeDescription(path, 0, 300L))
+                .build(), null, null
+        )
+    }
+
+    // Gesture-e Back-e gesture-nav (keshidan az kenar-e chap)
+    private fun backByGesture() {
+        val cy = screenHeight / 2f
+        val path = Path()
+        path.moveTo(4f, cy)
+        path.lineTo((screenWidth * 0.35f), cy)
+        dispatchGesture(
+            GestureDescription.Builder()
+                .addStroke(GestureDescription.StrokeDescription(path, 0, 220L))
+                .build(), null, null
+        )
+    }
+
+    // Gesture-e Home (swipe bala az paein)
+    private fun homeByGesture() {
+        val cx = screenWidth / 2f
+        val startY = (screenHeight - 8f)
+        val path = Path()
+        path.moveTo(cx, startY)
+        path.lineTo(cx, (screenHeight * 0.55f))
+        dispatchGesture(
+            GestureDescription.Builder()
+                .addStroke(GestureDescription.StrokeDescription(path, 0, 250L))
+                .build(), null, null
+        )
+    }
+
+    // Gesture-e Recents (swipe bala-o-seghat az paein)
+    private fun recentsByGesture() {
+        val cx = screenWidth / 2f
+        val startY = (screenHeight - 8f)
+        val path = Path()
+        path.moveTo(cx, startY)
+        path.lineTo(cx, (screenHeight * 0.55f))
+        dispatchGesture(
+            GestureDescription.Builder()
+                .addStroke(GestureDescription.StrokeDescription(path, 0, 180L))
+                .addStroke(GestureDescription.StrokeDescription(path, 250, 400L))
+                .build(), null, null
         )
     }
 
