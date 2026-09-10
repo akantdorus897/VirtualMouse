@@ -1,6 +1,8 @@
 package com.majazi.vmouse
 
 import android.Manifest
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -11,7 +13,9 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.view.animation.OvershootInterpolator
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.SeekBar
 import android.widget.TextView
 
@@ -23,6 +27,8 @@ class MainActivity : Activity() {
     private lateinit var currentConfig: TextView
     private lateinit var statusText: TextView
     private lateinit var notifStatus: TextView
+    private lateinit var preview: CursorView
+    private var floatAnim: ValueAnimator? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +51,7 @@ class MainActivity : Activity() {
         setupShapeButtons()
         setupColorButtons()
         setupCalibration()
+        setupPreview()
         updateLabels()
 
         findViewById<Button>(R.id.btn_accessibility).setOnClickListener {
@@ -119,6 +126,7 @@ class MainActivity : Activity() {
                 MouseConfig.shape = shape
                 prefs.edit().putInt("shape", shape).apply()
                 updateLabels()
+                popPreview()
                 notifyService()
             }
         }
@@ -137,6 +145,7 @@ class MainActivity : Activity() {
                 MouseConfig.color = color
                 prefs.edit().putInt("color", color).apply()
                 updateLabels()
+                popPreview()
                 notifyService()
             }
         }
@@ -190,10 +199,59 @@ class MainActivity : Activity() {
         MouseAccessibilityService.instance?.applySettings()
     }
 
+    // ---------------- Preview (neshangar-e zende ba animation) ----------------
+
+    private fun setupPreview() {
+        preview = findViewById(R.id.cursor_preview)
+        refreshPreview()
+        // Animation-e vorood: az koochaki ba overshoot baz misheh
+        preview.alpha = 0f
+        preview.scaleX = 0.2f
+        preview.scaleY = 0.2f
+        preview.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(600)
+            .setInterpolator(OvershootInterpolator(2.5f))
+            .start()
+        // Float-e payei: hamishe larzeesh-e molayem (mimune-haa raftan-o-bargashtan)
+        floatAnim = ObjectAnimator.ofFloat(preview, View.TRANSLATION_Y, 0f, -14f, 0f).apply {
+            duration = 1600
+            repeatCount = ObjectAnimator.INFINITE
+            start()
+        }
+    }
+
+    private fun refreshPreview() {
+        preview.shape = MouseConfig.shape
+        preview.color = MouseConfig.color
+        val sizeDp = MouseConfig.cursorSizeDp.coerceIn(24, 80)
+        val px = (sizeDp * resources.displayMetrics.density).toInt()
+        val lp = preview.layoutParams
+        lp.width = px
+        lp.height = px
+        preview.layoutParams = lp
+    }
+
+    private fun popPreview() {
+        // Har taghir: bong-a-click ba overshoot (jaleb!)
+        preview.animate().cancel()
+        preview.scaleX = 0.4f
+        preview.scaleY = 0.4f
+        preview.animate()
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(450)
+            .setInterpolator(OvershootInterpolator(3f))
+            .start()
+    }
+
     private fun updateLabels() {
         sensitivityLabel.text = getString(R.string.sens_format, MouseConfig.sensitivityLevel)
         sizeLabel.text = getString(R.string.size_format, MouseConfig.cursorSizeDp)
         currentConfig.text = getString(R.string.current_format, shapeName(), colorName())
+        refreshPreview()
     }
 
     private fun shapeName(): String = when (MouseConfig.shape) {

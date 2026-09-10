@@ -55,6 +55,13 @@ class MouseAccessibilityService : AccessibilityService() {
     private var menuView: View? = null
     private var menuParams: WindowManager.LayoutParams? = null
     private lateinit var cursorParams: WindowManager.LayoutParams
+
+    // Hover-e chasb: press + edameh ba harekat-e cursor (Chrome :hover fa'al mimuneh)
+    private var hoverActive = false
+    private var hoverStroke: GestureDescription.StrokeDescription? = null
+    private var hoverX = 0f
+    private var hoverY = 0f
+    private var hoverBtn: TextView? = null
     private var panelCollapsed = false
     private var panelX = 0
     private var panelY = 0
@@ -176,6 +183,8 @@ class MouseAccessibilityService : AccessibilityService() {
         cursorX = min(max(cursorX + dx, 0f), (screenWidth - 1).toFloat())
         cursorY = min(max(cursorY + dy, 0f), (screenHeight - 1).toFloat())
         updateCursorPosition()
+        // Agar hover-e chasb fa'al ast, stroke ro be ja-ye jadid edameh bedeh
+        if (hoverActive) continueHover()
     }
 
     private fun updateCursorPosition() {
@@ -222,6 +231,7 @@ class MouseAccessibilityService : AccessibilityService() {
                 }
                 if (panelCollapsed) showHandle() else showPanel()
             } else {
+                endHover()
                 hideMenu()
                 try {
                     cursorView?.let { windowManager.removeView(it) }
@@ -537,7 +547,7 @@ class MouseAccessibilityService : AccessibilityService() {
         row1.orientation = LinearLayout.HORIZONTAL
         row1.addView(panelButton("L", { performLeftClick() }, 1f / 3f))
         row1.addView(panelButton("R", { performRightClick() }, 1f / 3f))
-        row1.addView(panelButton("H", { performHover() }, 1f / 3f))
+        row1.addView(panelButton("H", { performHover() }, 1f / 3f).also { hoverBtn = it })
         panel.addView(row1)
 
         // Double + Drag + Menu
@@ -743,29 +753,99 @@ class MouseAccessibilityService : AccessibilityService() {
 
     private fun performLeftClick() {
         pulseCursor()
+        if (hoverActive) {
+            endHover()
+            handler.postDelayed({ dispatchGesture(strokeAt(clickX(), clickY(), 90L), null, null) }, 150L)
+            return
+        }
         dispatchGesture(strokeAt(clickX(), clickY(), 90L), null, null)
     }
 
     private fun performRightClick() {
         pulseCursor()
+        if (hoverActive) {
+            endHover()
+            handler.postDelayed({ dispatchGesture(strokeAt(clickX(), clickY(), 600L), null, null) }, 150L)
+            return
+        }
         dispatchGesture(strokeAt(clickX(), clickY(), 600L), null, null)
     }
 
     private fun performHover() {
         pulseCursor()
+        if (Build.VERSION.SDK_INT >= 26) {
+            // Hover-e CHASB: yek bar H bezan -> press shoroo misheh
+            // bad ba trackpad harakat kon -> menu-haye peykan-dar baz mimunan
+            // dobare H bezan -> raha misheh
+            if (hoverActive) endHover() else startHover()
+            return
+        }
+        // API < 26: press-e 350ms (rahnema-ye qadim)
         val cx = clickX()
         val cy = clickY()
         val path = Path()
         path.moveTo(cx, cy)
         path.lineTo(cx + 0.5f, cy + 0.5f)
-        // down -> 350ms hold -> up (browser ha halat :hover fa'al mikonan)
-        // 350ms: bein-e click (90ms) va long-press (600ms) - browser :hover fa'al misheh
         dispatchGesture(
             GestureDescription.Builder()
                 .addStroke(GestureDescription.StrokeDescription(path, 0, 350L))
                 .build(),
             null, null
         )
+    }
+
+    private fun startHover() {
+        hoverX = clickX()
+        hoverY = clickY()
+        val path = Path()
+        path.moveTo(hoverX, hoverY)
+        path.lineTo(hoverX + 0.5f, hoverY + 0.5f)
+        val stroke = GestureDescription.StrokeDescription(path, 0, 60L, true)
+        hoverStroke = stroke
+        hoverActive = true
+        hoverBtn?.text = "H●"
+        try {
+            dispatchGesture(GestureDescription.Builder().addStroke(stroke).build(), null, null)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun continueHover() {
+        val stroke = hoverStroke ?: return
+        val nx = clickX()
+        val ny = clickY()
+        if (abs(nx - hoverX) < 2f && abs(ny - hoverY) < 2f) return
+        val path = Path()
+        path.moveTo(hoverX, hoverY)
+        path.lineTo(nx, ny)
+        try {
+            val next = stroke.continueStroke(path, 0, 80L, true)
+            hoverStroke = next
+            hoverX = nx
+            hoverY = ny
+            dispatchGesture(GestureDescription.Builder().addStroke(next).build(), null, null)
+        } catch (_: Exception) {
+            hoverActive = false
+            hoverStroke = null
+            hoverBtn?.text = "H"
+        }
+    }
+
+    fun endHover() {
+        if (!hoverActive) return
+        hoverActive = false
+        hoverBtn?.text = "H"
+        val stroke = hoverStroke
+        hoverStroke = null
+        if (stroke == null) return
+        val path = Path()
+        path.moveTo(hoverX, hoverY)
+        path.lineTo(hoverX + 0.5f, hoverY + 0.5f)
+        try {
+            val next = stroke.continueStroke(path, 0, 40L, false)
+            dispatchGesture(GestureDescription.Builder().addStroke(next).build(), null, null)
+        } catch (_: Exception) {
+        }
     }
 
     private fun performDoubleClick() {
