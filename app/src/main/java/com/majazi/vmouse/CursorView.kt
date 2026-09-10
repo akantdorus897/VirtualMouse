@@ -75,18 +75,28 @@ class CursorView(context: Context) : View(context) {
 
     private fun drawHand(canvas: Canvas, w: Float) {
         val s = w / 34f
-        val palm = Path()
-        palm.addCircle(17 * s, 23 * s, 8 * s, Path.Direction.CW)
-        canvas.drawPath(palm, fill)
-        canvas.drawPath(palm, outline)
-        val finger = Path()
-        finger.addRoundRect(RectF(14.5f * s, 2 * s, 19.5f * s, 25 * s), 2.5f * s, 2.5f * s, Path.Direction.CW)
-        canvas.drawPath(finger, fill)
-        canvas.drawPath(finger, outline)
-        val thumb = Path()
-        thumb.addCircle(26 * s, 21 * s, 3.5f * s, Path.Direction.CW)
-        canvas.drawPath(thumb, fill)
-        canvas.drawPath(thumb, outline)
+        // Noke-ye engosht-e eshare: (17s, 2s) -> CLICK HAMOONJA MISHEH
+        // Kaf + 4 engosht-e past (gooshe-gerd) + engosht-e eshare-e boland
+        val fillP = Path()
+        // kaf (palm) - moraba-e gooshe-gerd
+        fillP.addRoundRect(RectF(8f * s, 15f * s, 26f * s, 31f * s), 5f * s, 5f * s, Path.Direction.CW)
+        // 4 engosht-e past (bexesvi chandan-e normal-e dast)
+        fillP.addRoundRect(RectF(8.5f * s, 16f * s, 12.5f * s, 27f * s), 2f * s, 2f * s, Path.Direction.CW)
+        fillP.addRoundRect(RectF(13f * s, 14f * s, 16.5f * s, 26f * s), 2f * s, 2f * s, Path.Direction.CW)
+        fillP.addRoundRect(RectF(17f * s, 13f * s, 20.5f * s, 26f * s), 2f * s, 2f * s, Path.Direction.CW)
+        fillP.addRoundRect(RectF(21f * s, 15f * s, 24.5f * s, 28f * s), 2f * s, 2f * s, Path.Direction.CW)
+        canvas.drawPath(fillP, fill)
+        canvas.drawPath(fillP, outline)
+        // engosht-e eshare - dorough-e noke baraye click daghigh
+        val pointer = Path()
+        pointer.addRoundRect(RectF(14.8f * s, 2f * s, 19.2f * s, 20f * s), 2.2f * s, 2.2f * s, Path.Direction.CW)
+        canvas.drawPath(pointer, fill)
+        canvas.drawPath(pointer, outline)
+        // mehak (esme dast) baraye jelvehe
+        val wrist = Path()
+        wrist.addRoundRect(RectF(11f * s, 28f * s, 23f * s, 32f * s), 3f * s, 3f * s, Path.Direction.CW)
+        canvas.drawPath(wrist, fill)
+        canvas.drawPath(wrist, outline)
     }
 
     private fun drawCenter(canvas: Canvas, w: Float, h: Float) {

@@ -244,8 +244,8 @@ class MouseAccessibilityService : AccessibilityService() {
         prefs.edit().putBoolean("panel_collapsed", false).apply()
         panelView = buildPanel()
         val lp = WindowManager.LayoutParams(
-            dp(108f).toInt(),
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            panelW,
+            panelH,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -368,12 +368,14 @@ class MouseAccessibilityService : AccessibilityService() {
                 prefs.edit().putInt("panel_x", panelX).putInt("panel_y", panelY).apply()
                 val v = panelView
                 if (v != null && panelParams != null) {
+                    panelParams?.x = panelX
                     panelParams?.y = panelY
                     try {
                         windowManager.updateViewLayout(v, panelParams)
                     } catch (_: Exception) {
                     }
                 } else if (handleView != null && handleParams != null) {
+                    handleParams?.x = panelX
                     handleParams?.y = panelY
                     try {
                         windowManager.updateViewLayout(handleView, handleParams)
@@ -678,7 +680,7 @@ class MouseAccessibilityService : AccessibilityService() {
         val size = cursorParams.width.toFloat()
         return when (MouseConfig.shape) {
             CursorView.SHAPE_CENTER, CursorView.SHAPE_CIRCLE -> floatArrayOf(size / 2f, size / 2f)
-            CursorView.SHAPE_HAND -> floatArrayOf(size / 2f, size * 2f / 34f)
+            CursorView.SHAPE_HAND -> floatArrayOf(size * 17f / 34f, size * 2f / 34f)
             else -> floatArrayOf(size * 4f / 34f, size * 2f / 34f)
         }
     }
@@ -714,6 +716,7 @@ class MouseAccessibilityService : AccessibilityService() {
         path.moveTo(cx, cy)
         path.lineTo(cx + 0.5f, cy + 0.5f)
         // down -> 350ms hold -> up (browser ha halat :hover fa'al mikonan)
+        // 350ms: bein-e click (90ms) va long-press (600ms) - browser :hover fa'al misheh
         dispatchGesture(
             GestureDescription.Builder()
                 .addStroke(GestureDescription.StrokeDescription(path, 0, 350L))
